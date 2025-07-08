@@ -463,6 +463,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   waypointSize: 0.3
   looped: 0
+  isMovingForward: 1
 --- !u!4 &1007551602
 Transform:
   m_ObjectHideFlags: 0

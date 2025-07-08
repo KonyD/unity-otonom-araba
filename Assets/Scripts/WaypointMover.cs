@@ -71,7 +71,7 @@ public class WaypointMover : MonoBehaviour
     private void OnGUI()
     {
         GUI.Label(
-        new Rect(10, 10, 350, 40),
+        new Rect(10, 10, 300, 20),
         $"Car Direction: {turnDirection}"
     );
     }

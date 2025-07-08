@@ -9,6 +9,7 @@ public class Waypoints : MonoBehaviour
 
     [Header("Path Settings")]
     [SerializeField] private bool looped = true;
+    [SerializeField] private bool isMovingForward = true;
 
     private void OnDrawGizmos()
     {
@@ -39,20 +40,46 @@ public class Waypoints : MonoBehaviour
             return transform.GetChild(0);
         }
 
-        if (currentWaypoint.GetSiblingIndex() < transform.childCount - 1)
+        // Stores the index of the current waypoint
+        int currentIndex = currentWaypoint.GetSiblingIndex();
+        // Stores the index of the next waypoint to travel towards
+        int nextIndex = currentIndex;
+
+        // Agent is moving forward on the path
+        if (isMovingForward) 
         {
-            return transform.GetChild(currentWaypoint.GetSiblingIndex() + 1);
+            nextIndex++;
+
+            if (nextIndex == transform.childCount)
+            {
+                if (looped)
+                {
+                    nextIndex = 0;
+                }
+                else
+                {
+                    nextIndex--;
+                }
+            }
         }
+        // Agent is moving forward on the path
         else
         {
-            if (looped)
+            nextIndex--;
+
+            if (nextIndex < 0)
             {
-                return transform.GetChild(0);
-            }
-            else
-            {
-                return transform.GetChild(currentWaypoint.GetSiblingIndex());
+                if (looped)
+                {
+                    nextIndex = transform.childCount - 1;
+                }
+                else
+                {
+                    nextIndex++;
+                }
             }
         }
+
+        return transform.GetChild(nextIndex);
     }
 }
