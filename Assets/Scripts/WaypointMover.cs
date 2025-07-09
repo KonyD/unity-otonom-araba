@@ -7,7 +7,7 @@ public class WaypointMover : MonoBehaviour
     // Stores a reference to the waypoint system this object will use
     [SerializeField] private Waypoints waypoints;
 
-    [SerializeField] private float moveSpeed = 5f;
+    [SerializeField] public float moveSpeed = 5f;
 
     [Range(0f, 10f)]
     [SerializeField] private float rotationSpeed = 5f;
