@@ -18,8 +18,8 @@ public class TrafficLightDetector : MonoBehaviour
     {
         Vector3[] directions = {
         transform.forward,
-        Quaternion.Euler(0, 15, 0) * transform.forward,
-        Quaternion.Euler(0, -15, 0) * transform.forward
+        //Quaternion.Euler(0, 15, 0) * transform.forward,
+        //Quaternion.Euler(0, -15, 0) * transform.forward
         };
 
         foreach (var dir in directions)
