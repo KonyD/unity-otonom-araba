@@ -72,7 +72,7 @@ public class WaypointMover : MonoBehaviour
     {
         GUI.Label(
         new Rect(10, 10, 300, 20),
-        $"Car Direction: {turnDirection}"
+        $"Araba Yönü: {turnDirection}"
     );
     }
 }
