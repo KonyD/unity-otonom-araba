@@ -4,75 +4,92 @@ using UnityEngine;
 
 public class WaypointMover : MonoBehaviour
 {
-    // Stores a reference to the waypoint system this object will use
     [SerializeField] private Waypoints waypoints;
 
-    [SerializeField] public float moveSpeed = 5f;
+    [SerializeField] public float targetSpeed = 5f;
 
-    [Range(0f, 10f)]
-    [SerializeField] private float rotationSpeed = 5f;
+    [Range(0f, 100f)]
+    [SerializeField] private float rotationSpeed = 100f;
+
+    public float currentSpeed = 0f;
+    private float actualSpeed = 0f;
+    private Vector3 lastPosition;
 
     [SerializeField] private float distanceThreshold = 0.1f;
 
     private string turnDirection;
 
-    // The current waypoint target that the object is moving towards
     private Transform currentWaypoint;
 
-    // Start is called before the first frame update
+    private PIDController rotationPID;
+    private PIDController speedPID;
+
+    [Header("Speed PID Settings")]
+    [SerializeField] private float speedKp = 1f;
+    [SerializeField] private float speedKi = 0f;
+    [SerializeField] private float speedKd = 0.2f;
+
+    [Header("Rotation PID Settings")]
+    [SerializeField] private float Kp = 1.5f;
+    [SerializeField] private float Ki = 0.05f;
+    [SerializeField] private float Kd = 1.0f;
+
     void Start()
     {
-        // Set initial position to the first waypoint
         currentWaypoint = waypoints.GetNextWaypoint(currentWaypoint);
         transform.position = currentWaypoint.position;
 
-        // Set the next waypoint target
         currentWaypoint = waypoints.GetNextWaypoint(currentWaypoint);
         transform.LookAt(currentWaypoint);
+
+        speedPID = new PIDController(speedKp, speedKi, speedKd);
+        lastPosition = transform.position;
+        rotationPID = new PIDController(Kp, Ki, Kd);
     }
 
-    // Update is called once per frame
     void Update()
     {
-        Vector3 toWaypoint = (currentWaypoint.position - transform.position);
+        Vector3 toWaypoint = currentWaypoint.position - transform.position;
         Vector3 forward = transform.forward;
 
-        RotateTowardsWaypoint(toWaypoint, forward);
+        float angleError = Vector3.SignedAngle(forward, toWaypoint, Vector3.up);
+        if (Mathf.Abs(angleError) < 1f) angleError = 0f;
 
-        transform.position = Vector3.MoveTowards(transform.position, currentWaypoint.position, moveSpeed * Time.deltaTime);
+        float pidOutput = rotationPID.Update(angleError, Time.deltaTime);
+        pidOutput = Mathf.Clamp(pidOutput, -rotationSpeed, rotationSpeed);
+
+        Quaternion deltaRotation = Quaternion.AngleAxis(pidOutput * Time.deltaTime, Vector3.up);
+        transform.rotation = deltaRotation * transform.rotation;
+
+        actualSpeed = (transform.position - lastPosition).magnitude / Time.deltaTime;
+        lastPosition = transform.position;
+
+        float speedError = targetSpeed - actualSpeed;
+        float speedOutput = speedPID.Update(speedError, Time.deltaTime);
+
+        currentSpeed += speedOutput * Time.deltaTime;
+        currentSpeed = Mathf.Clamp(currentSpeed, 0f, targetSpeed);
+
+        Vector3 moveDirection = toWaypoint.normalized;
+        transform.position += moveDirection * currentSpeed * Time.deltaTime;
 
         if (Vector3.Distance(transform.position, currentWaypoint.position) < distanceThreshold)
         {
             currentWaypoint = waypoints.GetNextWaypoint(currentWaypoint);
+            rotationPID.Reset();
+            speedPID.Reset();
         }
 
-        float angle = Vector3.SignedAngle(forward, toWaypoint, Vector3.up);
-        if (Mathf.Abs(angle) < 10f)
+        if (Mathf.Abs(angleError) < 10f)
             turnDirection = "Düz";
-        else if (angle > 0)
+        else if (angleError > 0)
             turnDirection = "Sað";
         else
             turnDirection = "Sol";
     }
 
-    // Will slowly rotate the agent towards the current waypoint it is moving towards 
-    private void RotateTowardsWaypoint(Vector3 toWaypoint, Vector3 forward)
-    {
-        if (toWaypoint.magnitude > 0.01f)
-        {
-            Vector3 desiredDirection = toWaypoint.normalized;
-            float steerAmount = rotationSpeed * Time.deltaTime;
-            Vector3 newDirection = Vector3.Slerp(forward, desiredDirection, steerAmount);
-            transform.rotation = Quaternion.LookRotation(newDirection);
-        }
-    }
-
-    // Draw the GUI
     private void OnGUI()
     {
-        GUI.Label(
-        new Rect(10, 10, 300, 20),
-        $"Araba Yönü: {turnDirection}"
-    );
+        GUI.Label(new Rect(10, 10, 300, 20), $"Araba Yönü: {turnDirection}");
     }
 }
